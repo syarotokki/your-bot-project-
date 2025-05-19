@@ -88,9 +88,9 @@ async def check_new_videos():
         channel = client.get_channel(int(channel_id))
         if channel:
             if latest.get('is_live'):
-                await channel.send(f"\U0001F534 ライブ配信が始まりました！\n**{latest['title']}**\n{latest['url']}")
+                await channel.send(f"🔴 ライブ配信が始まりました！\n**{latest['title']}**\n{latest['url']}")
             else:
-                await channel.send(f"\U0001F4F9 新しい動画が投稿されました！\n**{latest['title']}**\n{latest['url']}")
+                await channel.send(f"📹 新しい動画が投稿されました！\n**{latest['title']}**\n{latest['url']}")
             config[guild_id]['last_video_id'] = latest['video_id']
             save_config(config)
 
@@ -121,9 +121,9 @@ async def check_latest(interaction: discord.Interaction, youtube_channel_id: str
         await interaction.response.send_message("動画が見つかりませんでした。")
     else:
         if latest.get('is_live'):
-            await interaction.response.send_message(f"\U0001F534 最新ライブ配信: **{latest['title']}**\n{latest['url']}")
+            await interaction.response.send_message(f"🔴 最新ライブ配信: **{latest['title']}**\n{latest['url']}")
         else:
-            await interaction.response.send_message(f"\U0001F4F9 最新動画: **{latest['title']}**\n{latest['url']}")
+            await interaction.response.send_message(f"📹 最新動画: **{latest['title']}**\n{latest['url']}")
 
 @tree.command(name="force_notify", description="全登録チャンネルの最新動画を即座に通知")
 async def force_notify(interaction: discord.Interaction):
@@ -133,9 +133,9 @@ async def force_notify(interaction: discord.Interaction):
         if not latest:
             continue
         if latest.get('is_live'):
-            await channel.send(f"\U0001F534 (手動通知) ライブ配信開始！**{latest['title']}**\n{latest['url']}")
+            await channel.send(f"🔴 (手動通知) ライブ配信開始！**{latest['title']}**\n{latest['url']}")
         else:
-            await channel.send(f"\U0001F4F9 (手動通知) 新しい動画！**{latest['title']}**\n{latest['url']}")
+            await channel.send(f"📹 (手動通知) 新しい動画！**{latest['title']}**\n{latest['url']}")
         config[guild_id]['last_video_id'] = latest['video_id']
     save_config(config)
     await interaction.response.send_message("全チャンネルに通知を送信しました。")
@@ -149,11 +149,12 @@ async def notify_past(interaction: discord.Interaction):
         return
     channel = client.get_channel(int(entry['discord_channel_id']))
     videos = get_all_videos(entry['youtube_channel_id'])
-    if not videos:
+    valid_videos = [v for v in videos if v['video_id'] != '']
+    if not valid_videos:
         await interaction.response.send_message("過去の動画が見つかりませんでした。")
         return
-    for video in reversed(videos):
-        await channel.send(f"\U0001F4F9 過去の動画: **{video['title']}**\n{video['url']}")
+    for video in reversed(valid_videos):
+        await channel.send(f"📹 過去の動画: **{video['title']}**\n{video['url']}")
     await interaction.response.send_message("過去の動画をすべて通知しました。")
 
 @tree.command(name="change_channel", description="通知先のDiscordチャンネルを変更")
@@ -178,25 +179,6 @@ async def reset_all(interaction: discord.Interaction):
 
 @tree.command(name="help", description="コマンドの使い方を表示")
 async def help_command(interaction: discord.Interaction):
-    await interaction.response.send_message("""
-**使用できるコマンド一覧：**
-
-\U0001F4CC `/subscribe` - YouTubeチャンネルと通知チャンネルを登録  
-\U0001F4CC `/list_subscriptions` - 登録中のチャンネルを確認  
-\U0001F4CC `/check_latest` - 指定チャンネルの最新動画を確認  
-\U0001F4CC `/force_notify` - 即時に通知を送信  
-\U0001F4CC `/notify_past` - 過去の動画を一括通知  
-\U0001F4CC `/change_channel` - 通知先チャンネルを変更  
-\U0001F4CC `/reset_all_subscriptions` - 全登録を削除（管理者のみ）  
-\U0001F4CC `/help` - このヘルプメッセージを表示
-""")
-
-@client.event
-async def on_ready():
-    await tree.sync()
-    check_new_videos.start()
-    print(f"Logged in as {client.user}")
-
-keep_alive()
-client.run(DISCORD_TOKEN)
-
+    help_text = (
+        "/subscribe - YouTubeチャンネルの通知を登録\n"
+        "/list_subscriptions - 登録
