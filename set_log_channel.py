@@ -1,1 +1,0 @@
-# Command: /set log channel
